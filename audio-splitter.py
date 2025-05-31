@@ -17,6 +17,7 @@ import time
 import subprocess
 import shutil
 import locale
+from dotenv import load_dotenv, set_key
 
 # システムのデフォルトエンコーディングを取得
 SYSTEM_ENCODING = locale.getpreferredencoding()
@@ -24,6 +25,7 @@ SYSTEM_ENCODING = locale.getpreferredencoding()
 # ロギングの設定
 script_dir = os.path.dirname(os.path.abspath(__file__))
 log_file = os.path.join(script_dir, 'audio-splitter.log')
+env_file = os.path.join(script_dir, '.env')
 
 # 既存のログファイルを削除
 if os.path.exists(log_file):
@@ -43,6 +45,44 @@ logging.basicConfig(
 )
 
 logging.info(f"ログファイルを作成しました: {log_file}")
+
+def load_settings():
+    """設定を.envファイルから読み込む"""
+    if os.path.exists(env_file):
+        load_dotenv(env_file)
+        return {
+            'input_file': os.getenv('INPUT_FILE', ''),
+            'output_dir': os.getenv('OUTPUT_DIR', ''),
+            'split_duration': int(os.getenv('SPLIT_DURATION', '90')),
+            'preserve_quality': os.getenv('PRESERVE_QUALITY', 'True').lower() == 'true',
+            'auto_open_folder': os.getenv('AUTO_OPEN_FOLDER', 'True').lower() == 'true'
+        }
+    return {
+        'input_file': '',
+        'output_dir': '',
+        'split_duration': 90,
+        'preserve_quality': True,
+        'auto_open_folder': True
+    }
+
+def save_settings(settings):
+    """設定を.envファイルに保存"""
+    try:
+        # .envファイルが存在しない場合は作成
+        if not os.path.exists(env_file):
+            with open(env_file, 'w', encoding='utf-8') as f:
+                pass
+        
+        # 設定を保存
+        set_key(env_file, 'INPUT_FILE', settings['input_file'])
+        set_key(env_file, 'OUTPUT_DIR', settings['output_dir'])
+        set_key(env_file, 'SPLIT_DURATION', str(settings['split_duration']))
+        set_key(env_file, 'PRESERVE_QUALITY', str(settings['preserve_quality']))
+        set_key(env_file, 'AUTO_OPEN_FOLDER', str(settings['auto_open_folder']))
+        
+        logging.info("設定を.envファイルに保存しました")
+    except Exception as e:
+        logging.error(f"設定の保存に失敗: {str(e)}")
 
 def check_ffmpeg():
     """FFmpegが利用可能かチェック"""
@@ -105,11 +145,14 @@ class AudioSplitterGUI:
     
     def setup_variables(self):
         """変数の初期化"""
-        self.input_file = StringVar()
-        self.output_dir = StringVar()
-        self.split_duration = IntVar(value=90)
-        self.preserve_quality = BooleanVar(value=True)
-        self.auto_open_folder = BooleanVar(value=True)
+        # 設定を読み込む
+        settings = load_settings()
+        
+        self.input_file = StringVar(value=settings['input_file'])
+        self.output_dir = StringVar(value=settings['output_dir'])
+        self.split_duration = IntVar(value=settings['split_duration'])
+        self.preserve_quality = BooleanVar(value=settings['preserve_quality'])
+        self.auto_open_folder = BooleanVar(value=settings['auto_open_folder'])
         self.current_operation = None
     
     def setup_ui(self):
@@ -244,12 +287,16 @@ class AudioSplitterGUI:
             if not self.output_dir.get():
                 self.output_dir.set(os.path.dirname(filename))
                 logging.debug(f"出力フォルダを自動設定: {os.path.dirname(filename)}")
+            # 設定を保存
+            self.save_current_settings()
     
     def select_output_dir(self):
         """出力フォルダ選択"""
         directory = filedialog.askdirectory(title="出力フォルダを選択")
         if directory:
             self.output_dir.set(directory)
+            # 設定を保存
+            self.save_current_settings()
     
     def on_input_file_change(self, *args):
         """入力ファイル変更時の処理"""
@@ -481,6 +528,17 @@ class AudioSplitterGUI:
         
         # 100ms後に再チェック
         self.root.after(100, self.check_progress)
+
+    def save_current_settings(self):
+        """現在の設定を保存"""
+        settings = {
+            'input_file': self.input_file.get(),
+            'output_dir': self.output_dir.get(),
+            'split_duration': self.split_duration.get(),
+            'preserve_quality': self.preserve_quality.get(),
+            'auto_open_folder': self.auto_open_folder.get()
+        }
+        save_settings(settings)
 
 
 def main():
