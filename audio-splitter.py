@@ -96,6 +96,12 @@ class AudioSplitterGUI:
         style.configure('Info.TLabel', font=('Helvetica', 9))
         style.configure('Success.TLabel', foreground='green', font=('Helvetica', 9, 'bold'))
         style.configure('Error.TLabel', foreground='red', font=('Helvetica', 9, 'bold'))
+        
+        # 進捗バーのスタイル設定
+        style.configure("Green.Horizontal.TProgressbar", 
+                       troughcolor='#E0E0E0',
+                       background='#4CAF50',  # グリーン
+                       thickness=20)
     
     def setup_variables(self):
         """変数の初期化"""
@@ -200,7 +206,9 @@ class AudioSplitterGUI:
         self.progress_frame.grid(row=row, column=0, columnspan=3, sticky=(W, E), pady=(0, 15))
         self.progress_frame.columnconfigure(0, weight=1)
         
-        self.progress_bar = ttk.Progressbar(self.progress_frame, mode='determinate')
+        self.progress_bar = ttk.Progressbar(self.progress_frame, 
+                                          mode='determinate',
+                                          style="Green.Horizontal.TProgressbar")
         self.progress_bar.grid(row=0, column=0, sticky=(W, E), pady=(0, 5))
         
         self.progress_label = ttk.Label(self.progress_frame, text="", style='Info.TLabel')
