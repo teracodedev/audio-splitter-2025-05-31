@@ -121,7 +121,7 @@ class AudioSplitterGUI:
     
     def setup_window(self):
         """ウィンドウの基本設定"""
-        self.root.title("Audio Splitter Pro")
+        self.root.title("Audio Splitter")
         self.root.geometry("600x700")  # 縦幅を480から700に変更
         self.root.minsize(600, 700)    # 最小サイズも設定
         self.root.resizable(True, True)
@@ -169,7 +169,7 @@ class AudioSplitterGUI:
         row = 0
         
         # タイトル
-        title_label = ttk.Label(main_frame, text="🎵 Audio Splitter Pro", style='Title.TLabel')
+        title_label = ttk.Label(main_frame, text="🎵 Audio Splitter", style='Title.TLabel')
         title_label.grid(row=row, column=0, columnspan=3, pady=(0, 20))
         row += 1
         
